@@ -69,8 +69,7 @@ public class AccountBuilder extends RouteBuilder {
         from("jms:queue:extracted-customer")
                 .log("curr body: ${body}")
                 .log("curr username: ${body.username}")
-                .to("graphql://http://localhost:8082/graphql?query=mutation{addAccount(id:\"${body.id}\", email:\"${body.email}\", username:\"${body.username}\","
-                        + " firstName:\"${body.first_name}\",  lastName:\"${body.last_name}\",  group:\"${body.customer_group_id}\") {account{id, email, username, firstName, lastName, group}}}")
+                .to("graphql://http://localhost:8082/graphql?query=mutation{addAccount(account: {id:\"${body.id}\", email:\"${body.email}\", username:\"${body.username}\", firstName:\"${body.firstName}\",  lastName:\"${body.lastName}\",  group:\"${body.group}\"}) {id email username firstName lastName group}}")
                 .log("GraphQL service called");
 
     }
