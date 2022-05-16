@@ -10,31 +10,18 @@
     </head>
     <body>
         <main>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="account in accounts">
-                        <td>{{account.id}}</td>
-                        <td>{{account.name}}</td>
-                        <td>{{account.description}}</td>
-                    </tr>
-                </tbody>
-            </table>
+     
             <h1>Add a New Product</h1>
 
             <fieldset>
                 <legend>Product Details</legend>
                 <form @submit.prevent="addAccount()">
-                    <label>ID:</label><input type="text" v-model="account.id">
-                    <label>Name:</label><input type="text" v-model="account.name">
-                    <label>Description:</label><input type="text" v-model="account.description">
-                    <button>Add New Product</button>
+  
+                    <label>Username:</label><input type="text" v-model="account.username">
+                    <label>Email</label><input type="text" v-model="account.email">
+                    <label>Firstname</label><input type="text" v-model="account.firstName">
+                    <label>Lastname</label><input type="text" v-model="account.lastName">
+                    <button>Signup</button>
                 </form>
             </fieldset>
         </main>
