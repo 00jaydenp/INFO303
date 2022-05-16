@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
  */
 public class BridgeService {
 
-	private final static String USERNAME = "YOUR USERNAME";
+	private final static String USERNAME = "praja126";
 
 	private final static String JMS_QUEUE = "new-sale";
 	private final static String SSE_EVENT = "new-sale";

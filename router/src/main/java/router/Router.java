@@ -25,6 +25,17 @@ public class Router {
 
 // enable stream caching so that things like loggers don't consume the messages
         camel.setStreamCaching(true);
+
+        // create and add the builder(s)
+        camel.addRoutes(new AccountBuilder());
+        camel.addRoutes(new SaleBuilder());
+
+// start routing
+        System.out.println("Starting router...");
+        camel.start();
+        System.out.println("... ready.  Press enter to shutdown.");
+        System.in.read();
+        camel.stop();
     }
 
 }
