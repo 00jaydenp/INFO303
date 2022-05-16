@@ -5,6 +5,7 @@
 package router;
 
 import domain.Account;
+import domain.Customer;
 import org.apache.camel.Exchange;
 import org.apache.camel.ExchangePattern;
 import org.apache.camel.builder.RouteBuilder;
@@ -22,15 +23,16 @@ public class AccountBuilder extends RouteBuilder {
         from("jetty:http://localhost:9000/account?enableCORS=true")
                 // make message in-only so web browser doesn't have to wait on a non-existent response
                 .setExchangePattern(ExchangePattern.InOnly)
+                .convertBodyTo(String.class)
                 .log("${body}")
                 .unmarshal().json(JsonLibrary.Gson, Account.class)
                 .to("jms:queue:account-converter");
 
         from("jms:queue:account-converter")
                 .bean(AccountConverter.class, "accountToCustomer(${body})")
-                .to("jms:queue:send-to-vend");
+                .to("jms:queue:vend-account");
 
-        from("jms:queue:send-to-vend")
+        from("jms:queue:vend-account")
                 // remove headers so they don't get sent to Vend
                 .removeHeaders("*")
                 // add authentication token to authorization header
@@ -52,6 +54,25 @@ public class AccountBuilder extends RouteBuilder {
                 .convertBodyTo(String.class)
                 .to("jms:queue:vend-error")
                 .endChoice();
+
+        from("jms:queue:vend-response")
+                .log("curr body: ${body}")
+                .setBody().jsonpath("$.data")
+                .marshal().json(JsonLibrary.Gson)
+                .unmarshal().json(JsonLibrary.Gson, Customer.class)
+                .to("jms:queue:customer-converter");
+        
+         from("jms:queue:customer-converter")
+                .bean(CustomerConverter.class, "customerToAccount(${body})")
+                .to("jms:queue:extracted-customer");
+
+        from("jms:queue:extracted-customer")
+                .log("curr body: ${body}")
+                .log("curr username: ${body.username}")
+                .to("graphql://http://localhost:8082/graphql?query=mutation{addAccount(id:\"${body.id}\", email:\"${body.email}\", username:\"${body.username}\","
+                        + " firstName:\"${body.first_name}\",  lastName:\"${body.last_name}\",  group:\"${body.customer_group_id}\") {account{id, email, username, firstName, lastName, group}}}")
+                .log("GraphQL service called");
+
     }
 
 }
