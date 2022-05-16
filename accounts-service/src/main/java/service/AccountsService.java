@@ -2,6 +2,8 @@ package service;
 
 import dao.AccountsDAO;
 import graphql.AccountWiring;
+import io.jooby.Cors;
+import io.jooby.CorsHandler;
 import io.jooby.Jooby;
 import io.jooby.ServerOptions;
 import io.jooby.graphql.GraphQLModule;
@@ -14,7 +16,7 @@ public class AccountsService extends Jooby {
 	public AccountsService() {
 
 		AccountsDAO dao = new AccountsDAO();
-
+                decorator(new CorsHandler(new Cors().setMethods("GET", "POST", "PUT", "DELETE")));
 		setServerOptions(new ServerOptions().setPort(8082));
 
 		install(new GsonModule());
