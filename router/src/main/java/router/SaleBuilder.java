@@ -43,18 +43,18 @@ public class SaleBuilder extends RouteBuilder {
                 .setBody(constant(null)) // doesn't usually make sense to pass a body in a GET request
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
                 .toD("http://localhost:8083/api/sales/customer/${exchangeProperty.id}/summary")
-
                 .unmarshal().json(JsonLibrary.Gson, Summary.class)
                 .setProperty("calculatedGroup").method(groupGenerator.class, "generateGroupID(${body.group})")
                 .log("total Payment =$ ${body.totalPayment}")
                 .choice()
-                    .when().simple("${exchangeProperty.calculatedGroup} != ${exchangeProperty.group}")
-                    .bean(CustomerCreator.class, "createCustomer(${exchangeProperty.id}, ${exchangeProperty.email}, ${exchangeProperty.calculatedGroup}, ${exchangeProperty.username}, "
-                            + "${exchangeProperty.firstname}, ${exchangeProperty.lastname})")
-                    .to("jms:queue:created-customer");
-        
+                .when().simple("${exchangeProperty.calculatedGroup} != ${exchangeProperty.group}")
+                .bean(CustomerCreator.class, "createCustomer(${exchangeProperty.id}, ${exchangeProperty.email}, ${exchangeProperty.calculatedGroup}, ${exchangeProperty.username}, "
+                        + "${exchangeProperty.firstname}, ${exchangeProperty.lastname})")
+                .to("jms:queue:created-customer");
+
         from("jms:queue:created-customer")
-                .marshal().json(JsonLibrary.Gson) // only necessary if object needs to be converted to JSON
-                .log("${body}");
+                .log("${body}")
+                .toD("graphql://http://localhost:8082/graphql?query=mutation{changeGroup(id:\"${body.id}\", newGroup:\"${body.group}\"){id email username firstName lastName group}}")
+                .log("GraphQL service called");
     }
 }
