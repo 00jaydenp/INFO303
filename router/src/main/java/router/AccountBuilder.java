@@ -26,11 +26,9 @@ public class AccountBuilder extends RouteBuilder {
                 .convertBodyTo(String.class)
                 .log("${body}")
                 .unmarshal().json(JsonLibrary.Gson, Account.class)
-                .to("jms:queue:account-converter");
-
-        from("jms:queue:account-converter")
                 .bean(AccountConverter.class, "accountToCustomer(${body})")
                 .to("jms:queue:vend-account");
+                
 
         from("jms:queue:vend-account")
                 // remove headers so they don't get sent to Vend
@@ -60,16 +58,13 @@ public class AccountBuilder extends RouteBuilder {
                 .setBody().jsonpath("$.data")
                 .marshal().json(JsonLibrary.Gson)
                 .unmarshal().json(JsonLibrary.Gson, Customer.class)
-                .to("jms:queue:customer-converter");
-        
-         from("jms:queue:customer-converter")
                 .bean(CustomerConverter.class, "customerToAccount(${body})")
                 .to("jms:queue:extracted-customer");
 
         from("jms:queue:extracted-customer")
                 .log("curr body: ${body}")
                 .log("curr username: ${body.username}")
-                .to("graphql://http://localhost:8082/graphql?query=mutation{addAccount(account: {id:\"${body.id}\", email:\"${body.email}\", username:\"${body.username}\", firstName:\"${body.firstName}\",  lastName:\"${body.lastName}\",  group:\"${body.group}\"}) {id email username firstName lastName group}}")
+                .toD("graphql://http://localhost:8082/graphql?query=mutation{addAccount(account: {id:\"${body.id}\", email:\"${body.email}\", username:\"${body.username}\", firstName:\"${body.firstName}\",  lastName:\"${body.lastName}\",  group:\"${body.group}\"}) {id email username firstName lastName group}}")
                 .log("GraphQL service called");
 
     }
