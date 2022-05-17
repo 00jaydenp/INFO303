@@ -28,9 +28,9 @@ public class SaleBuilder extends RouteBuilder {
                 .setProperty("firstname").jsonpath("$.customer.first_name")
                 .setProperty("lastname").jsonpath("$.customer.last_name")
                 .unmarshal().json(JsonLibrary.Gson, Sale.class)
-                .to("jms:queue:rest-sale");
+                .to("jms:queue:post-sale");
 
-        from("jms:queue:rest-sale")
+        from("jms:queue:post-sale")
                 .marshal().json(JsonLibrary.Gson) // only necessary if object needs to be converted to JSON
                 .removeHeaders("*") // remove headers to stop them being sent to the service
                 .setHeader(Exchange.HTTP_METHOD, constant("POST"))
@@ -43,14 +43,18 @@ public class SaleBuilder extends RouteBuilder {
                 .setBody(constant(null)) // doesn't usually make sense to pass a body in a GET request
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
                 .toD("http://localhost:8083/api/sales/customer/${exchangeProperty.id}/summary")
-                .to("jms:queue:summary-response");
 
-        from("jms:queue:summary-response")
                 .unmarshal().json(JsonLibrary.Gson, Summary.class)
                 .setProperty("calculatedGroup").method(groupGenerator.class, "generateGroupID(${body.group})")
                 .log("total Payment =$ ${body.totalPayment}")
                 .choice()
                     .when().simple("${exchangeProperty.calculatedGroup} != ${exchangeProperty.group}")
-                .to("jms:queue:group-summary");
+                    .bean(CustomerCreator.class, "createCustomer(${exchangeProperty.id}, ${exchangeProperty.email}, ${exchangeProperty.calculatedGroup}, ${exchangeProperty.username}, "
+                            + "${exchangeProperty.firstname}, ${exchangeProperty.lastname})")
+                    .to("jms:queue:created-customer");
+        
+        from("jms:queue:created-customer")
+                .marshal().json(JsonLibrary.Gson) // only necessary if object needs to be converted to JSON
+                .log("${body}");
     }
 }
