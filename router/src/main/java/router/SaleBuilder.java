@@ -5,6 +5,7 @@
 package router;
 
 import domain.Sale;
+import domain.Summary;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.dataformat.JsonLibrary;
@@ -43,5 +44,13 @@ public class SaleBuilder extends RouteBuilder {
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
                 .toD("http://localhost:8083/api/sales/customer/${exchangeProperty.id}/summary")
                 .to("jms:queue:summary-response");
+
+        from("jms:queue:summary-response")
+                .unmarshal().json(JsonLibrary.Gson, Summary.class)
+                .setProperty("calculatedGroup").method(groupGenerator.class, "generateGroupID(${body.group})")
+                .log("total Payment =$ ${body.totalPayment}")
+                .choice()
+                    .when().simple("${exchangeProperty.calculatedGroup} != ${exchangeProperty.group}")
+                .to("jms:queue:group-summary");
     }
 }

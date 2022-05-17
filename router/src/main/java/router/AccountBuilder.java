@@ -54,7 +54,6 @@ public class AccountBuilder extends RouteBuilder {
                 .endChoice();
 
         from("jms:queue:vend-response")
-                .log("curr body: ${body}")
                 .setBody().jsonpath("$.data")
                 .marshal().json(JsonLibrary.Gson)
                 .unmarshal().json(JsonLibrary.Gson, Customer.class)
