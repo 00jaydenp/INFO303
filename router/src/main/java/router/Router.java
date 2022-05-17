@@ -15,7 +15,7 @@ public class Router {
         camel.addComponent("jms", activemq);
 
 // transfer the entire exchange, or just the body and headers?
-        activemq.setTransferExchange(false);
+        activemq.setTransferExchange(true);
 
 // trust all classes being used to send serialised domain objects
         activemq.setTrustAllPackages(true);

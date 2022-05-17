@@ -22,6 +22,10 @@ public class SaleBuilder extends RouteBuilder {
                 .log("${body}")
                 .setProperty("group").jsonpath("$.customer.customer_group_id") // extract ID from JSON, and store in header 
                 .setProperty("id").jsonpath("$.customer.id")
+                .setProperty("email").jsonpath("$.customer.email")
+                .setProperty("username").jsonpath("$.customer.customer_code")
+                .setProperty("firstname").jsonpath("$.customer.first_name")
+                .setProperty("lastname").jsonpath("$.customer.last_name")
                 .unmarshal().json(JsonLibrary.Gson, Sale.class)
                 .to("jms:queue:rest-sale");
 
