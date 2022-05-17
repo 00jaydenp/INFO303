@@ -50,11 +50,32 @@ public class SaleBuilder extends RouteBuilder {
                 .when().simple("${exchangeProperty.calculatedGroup} != ${exchangeProperty.group}")
                 .bean(CustomerCreator.class, "createCustomer(${exchangeProperty.id}, ${exchangeProperty.email}, ${exchangeProperty.calculatedGroup}, ${exchangeProperty.username}, "
                         + "${exchangeProperty.firstname}, ${exchangeProperty.lastname})")
-                .to("jms:queue:created-customer");
+                .multicast()
+                    .to("jms:queue:update-graphql", "jms:queue:update-vend");
 
-        from("jms:queue:created-customer")
-                .log("${body}")
+        from("jms:queue:update-graphql")
                 .toD("graphql://http://localhost:8082/graphql?query=mutation{changeGroup(id:\"${body.id}\", newGroup:\"${body.group}\"){id email username firstName lastName group}}")
                 .log("GraphQL service called");
+        
+        from("jms:queue:update-vend")
+                // remove headers so they don't get sent to Vend
+                .removeHeaders("*")
+                // add authentication token to authorization header
+                .setHeader("Authorization", constant("Bearer KiQSsELLtocyS2WDN5w5s_jYaBpXa0h2ex1mep1a"))
+                // marshal to JSON
+                .marshal().json(JsonLibrary.Gson) // only necessary if the message is an object, not JSON
+                .setHeader(Exchange.CONTENT_TYPE).constant("application/json")
+                // set HTTP method
+                .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
+                // send it
+                .toD("https://info303otago.vendhq.com/api/2.0/customers/${exchangeProperty.id}?throwExceptionOnFailure=false")
+                .choice()
+                .when().simple("${header.CamelHttpResponseCode} == '200'") // change to 200 for PUT
+                .convertBodyTo(String.class)
+                .otherwise()
+                .log("ERROR RESPONSE ${header.CamelHttpResponseCode} ${body}")
+                .convertBodyTo(String.class)
+                .endChoice();
+
     }
 }
