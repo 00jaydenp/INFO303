@@ -58,13 +58,12 @@ public class AccountBuilder extends RouteBuilder {
                 .setBody().jsonpath("$.data")
                 .marshal().json(JsonLibrary.Gson)
                 .unmarshal().json(JsonLibrary.Gson, Customer.class)
-                .bean(CustomerConverter.class, "customerToAccount(${body})")
                 .to("jms:queue:extracted-customer");
 
         from("jms:queue:extracted-customer")
                 .log("curr body: ${body}")
-                .log("curr username: ${body.username}")
-                .toD("graphql://http://localhost:8082/graphql?query=mutation{addAccount(account: {id:\"${body.id}\", email:\"${body.email}\", username:\"${body.username}\", firstName:\"${body.firstName}\",  lastName:\"${body.lastName}\",  group:\"${body.group}\"}) {id email username firstName lastName group}}")
+                .log("curr username: ${body.customerCode}")
+                .toD("graphql://http://localhost:8082/graphql?query=mutation{addAccount(account: {id:\"${body.id}\", email:\"${body.email}\", username:\"${body.customerCode}\", firstName:\"${body.firstName}\",  lastName:\"${body.lastName}\",  group:\"${body.group}\"}) {id email username firstName lastName group}}")
                 .log("GraphQL service called");
 
     }
