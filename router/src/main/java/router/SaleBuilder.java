@@ -68,14 +68,7 @@ public class SaleBuilder extends RouteBuilder {
                 // set HTTP method
                 .setHeader(Exchange.HTTP_METHOD, constant("PUT"))
                 // send it
-                .toD("https://info303otago.vendhq.com/api/2.0/customers/${exchangeProperty.id}?throwExceptionOnFailure=false")
-                .choice()
-                .when().simple("${header.CamelHttpResponseCode} == '200'") // change to 200 for PUT
-                .convertBodyTo(String.class)
-                .otherwise()
-                .log("ERROR RESPONSE ${header.CamelHttpResponseCode} ${body}")
-                .convertBodyTo(String.class)
-                .endChoice();
+                .toD("https://info303otago.vendhq.com/api/2.0/customers/${exchangeProperty.id}?throwExceptionOnFailure=false");
 
     }
 }
