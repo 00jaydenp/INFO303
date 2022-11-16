@@ -1,3 +1,5 @@
+INFO303 Enterprise Information Systems Infrastructure
+
 Topics include:
 
 Enterprise computing concepts (middleware, microservices and APIs)
